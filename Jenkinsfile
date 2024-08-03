@@ -1,45 +1,51 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKER_IMAGE = 'my-python-app:latest'
+    }
+
     stages {
-        stage('Static Code Analysis') {
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/stella-pliatsiou/pipeline.git'
+            }
+        }
+        
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Example: Run TruffleHog for detecting secrets
-                    sh 'trufflehog --entropy=True .'
-                    
-                    // Example: Run a linter (e.g., for Python)
-                    sh 'flake8 .'
-                    
-                    // Example: Run a static code analyzer like SonarQube
-                    sh 'sonar-scanner'
+                    // Κατασκευή του Docker image
+                    bat 'docker build -t my-python-app:latest .'
                 }
             }
         }
-        stage('Build') {
-            steps {
-                // Example: Build the application (Java in this case)
-                sh './gradlew build'
-            }
-        }
-        stage('Dynamic Analysis') {
+        
+        stage('Run Tests') {
             steps {
                 script {
-                    // Example: Run nmap to scan open ports
-                    sh 'nmap -p 1-65535 localhost'
-                    
-                    // Example: Scan docker images for vulnerabilities
-                    sh 'docker scan my-app'
-                    
-                    // Example: Run SQLmap for SQL injection testing
-                    sh 'sqlmap -u http://localhost:8080/my-endpoint'
+                    // Εκτέλεση των δοκιμών εντός του Docker container
+                    bat 'docker run --rm my-python-app:latest pytest'
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    // Εντολές ανάπτυξης μπορούν να προστεθούν εδώ
+                    bat 'docker run -d --name my-python-app -p 8000:8000 my-python-app:latest'
                 }
             }
         }
     }
+
     post {
-        always {
-            // Example: Clean up the workspace
-            cleanWs()
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
