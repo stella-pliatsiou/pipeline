@@ -1,18 +1,32 @@
-version: '3.3'
+version: '3.8'  # Ορισμός της έκδοσης του Docker Compose
+
 services:
   app:
-    build: .
-         dockerfile: C:/Users/pliat/OneDrive/Documents/myPipeline/Dockerfile
+    build:
+      context: .  # Ο τρέχων κατάλογος ως το context του build
+      dockerfile: Dockerfile  # Το Dockerfile που θα χρησιμοποιηθεί
+    image: my-python-app:latest  # Το όνομα της εικόνας
+    container_name: my-python-container  # Το όνομα του container
     ports:
-      - "8080:8080"
-    networks:
-      - my-network
-  jenkins:
-    image: jenkins/jenkins:lts
-    ports:
-      - "8081:8080"
-    networks:
-      - my-network
+      - "8000:8000"  # Χάρτης θύρας
+    volumes:
+      - .:/myPipeline  # Αντιγραφή του τρέχοντος καταλόγου στο /app στο container
+    environment:
+      PYTHON_ENV: development  # Προαιρετική μεταβλητή περιβάλλοντος
+    command: python app.py  # Εντολή εκκίνησης για την εφαρμογή
 
-networks:
-  my-network:
+  # Αν έχετε ανάγκη για βάση δεδομένων, μπορείτε να προσθέσετε και μια υπηρεσία για αυτήν
+  db:
+    image: postgres:latest  # Χρήση της τελευταίας εικόνας του PostgreSQL
+    container_name: my-db-container  # Όνομα container της βάσης δεδομένων
+    environment:
+      POSTGRES_DB: mydatabase  # Το όνομα της βάσης δεδομένων
+      POSTGRES_USER: user  # Το όνομα χρήστη της βάσης δεδομένων
+      POSTGRES_PASSWORD: password  # Ο κωδικός πρόσβασης της βάσης δεδομένων
+    ports:
+      - "5432:5432"  # Χάρτης θύρας
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Διαρκής αποθήκευση δεδομένων
+
+volumes:
+  db_data:  # Ορισμός του volume για τη βάση δεδομένων
